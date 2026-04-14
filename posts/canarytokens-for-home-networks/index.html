@@ -85,57 +85,68 @@
 <div class="meta">Tyron Kemp · Feb 4, 2024 · 2 min read</div>
 
 <p>
-<a href="https://twitter.com/Denver_A">Denver</a>,
-<a href="https://twitter.com/dev0x01">Dev</a> and I did a talk about
-<a href="https://canarytokens.org/generate">Canarytokens</a> at
-<a href="https://www.youtube.com/watch?v=PURTU_F27Wk">BSides Cape Town 2022</a>.
-A portion of the talk covers how you could use Canarytokens to protect your SOHO networking equipment.
-This is what you’ll find written up below.
-</p>
-
-<h3>Detecting failed authentication attempts against a Mikrotik</h3>
-
-<p>
-Canarytokens are mostly built on top of two primitive alerting channels: HTTP and/or DNS requests.
-We can easily deploy various pre-built tokens (MS-Word, AWS, etc.), build our own detection,
-and use either the Web Bug or DNS Canarytoken as a triggering mechanism.
+During a talk at <a href="https://www.youtube.com/watch?v=PURTU_F27Wk">BSides Cape Town 2022</a>, Denver, Dev and I explored how Canarytokens can be used beyond traditional file-based traps — specifically for monitoring SOHO networking equipment.
 </p>
 
 <p>
-This is what we’ll do below (use a DNS Canarytoken to trigger alerts for failed login attempts on a Mikrotik router).
+One practical example is detecting <strong>failed login attempts on a MikroTik router</strong> using a DNS Canarytoken. This post walks through how to set that up.
+</p>
+
+<h3>How it works</h3>
+
+<p>
+Canarytokens primarily rely on two alerting mechanisms:
+</p>
+
+<ul>
+  <li>HTTP requests</li>
+  <li>DNS requests</li>
+</ul>
+
+<p>
+In this setup, we use a <strong>DNS Canarytoken</strong> as a lightweight detection mechanism.
 </p>
 
 <p>
-A Mikrotik <a href="https://wiki.mikrotik.com/wiki/Manual:Scripting">script</a>,
+When a failed login occurs on the MikroTik device, a script triggers a DNS lookup to the Canarytoken domain — generating an alert.
+</p>
+
+<h3>Detecting failed authentication attempts on MikroTik</h3>
+
+<p>
+A MikroTik <a href="https://wiki.mikrotik.com/wiki/Manual:Scripting">script</a>,
 <a href="https://wiki.mikrotik.com/wiki/Manual:System/Scheduler">scheduler</a>,
-and applicable <a href="https://wiki.mikrotik.com/wiki/Manual:System/Log">logging</a>
-needs to be configured on your Mikrotik.
+and <a href="https://wiki.mikrotik.com/wiki/Manual:System/Log">logging</a>
+must be configured.
 </p>
 
-<h4>Step 1 - Create Canarytoken and modify script parameters</h4>
+<h4>Step 1 — Create a DNS Canarytoken</h4>
 
 <p>
-The <a href="https://github.com/tkempheks/canary-canarytoken-stuff/blob/main/mikrotik_canarytoken_alerter">
-mikrotik_canarytoken_alerter</a> script requires you to create a DNS Canarytoken.
+Generate a DNS token from <a href="https://canarytokens.org/generate">Canarytokens</a> and copy the generated hostname.
 </p>
 
 <img src="/assets/images/dns-canarytoken.png" class="img-small" alt="DNS Canarytoken">
 
 <p>
-Modify the <code>tokenDNSUrl</code> variable to include the host name generated from the DNS Canarytoken.
+Update the <code>tokenDNSUrl</code> variable in your script:
+</p>
+
+<pre><code>:local tokenDNSUrl "abc123.canarytokens.com"
+</code></pre>
+
+<p>
+Take note of the <code>currentBuf</code> variable — it indicates that a <em>"canary"</em> logging action should trigger the DNS request.
 </p>
 
 <img src="/assets/images/tokenDNSUrl.png" alt="tokenDNSUrl">
-
-<p>
-Take note of the currentBuf variable which indicates that a ‘canary’ logging action is required.
-</p>
-
 <img src="/assets/images/loggingBuffer.png" alt="loggingBuffer">
 
-<h4>Step 2 - Configure logging</h4>
+<h4>Step 2 — Configure logging</h4>
 
-<p>A logging rule and action can be configured using:</p>
+<p>
+Create a logging action and rule:
+</p>
 
 <pre><code>/system logging action
 add name=canary target=disk
@@ -144,46 +155,70 @@ add action=canary topics=system,error,critical
 </code></pre>
 
 <p>
-At this point, if a log entry contains “login failure” and the script is run,
-an alert will be generated.
+Any log entry containing <code>"login failure"</code> will be picked up and used to trigger the alert.
 </p>
 
-<h4>Step 3 - Configure scheduler</h4>
+<h4>Step 3 — Configure scheduler</h4>
 
 <pre><code>/system scheduler
 add interval=5m name=check-failed-login-attempts \
 on-event="/system/script/run auth-alert"
 </code></pre>
 
-<h4>Step 4 - Test and confirm</h4>
+<h4>Step 4 — Test and confirm</h4>
 
-<pre><code>log/print
+<pre><code>/log/print
 
 18:50:44 system,error,critical login failure for user root
 18:50:45 system,error,critical login failure for user root
 </code></pre>
 
-<p>Viola:</p>
+<p>
+Once triggered, the router performs a DNS lookup to your Canarytoken domain — generating an alert.
+</p>
 
 <img src="/assets/images/dnsMikrotikTrigger.png" class="img-small" alt="Trigger">
 
-<h4>Extra reading / script internals</h4>
+<h3>What the alert contains</h3>
 
 <p>
-If you dig into the Canarytoken alert, you’ll notice additional information (Chnl, Usr and IP):
+Inspecting the alert reveals useful metadata:
 </p>
+
+<ul>
+  <li><strong>Chnl</strong> — Channel</li>
+  <li><strong>Usr</strong> — Username</li>
+  <li><strong>IP</strong> — Source IP</li>
+</ul>
 
 <img src="/assets/images/genericData.png" class="img-small" alt="Data">
 
+<h3>Advanced: embedding additional data</h3>
+
 <p>
-We can embed additional data into the DNS request sent to the Canarytoken server.
-The encoding steps are documented
+You can embed additional context directly into the DNS request by encoding it into the subdomain.
+</p>
+
+<pre><code>&lt;encoded_data&gt;.abc123.canarytokens.com
+</code></pre>
+
+<p>
+The encoding process is documented
 <a href="https://docs.canarytokens.org/guide/dns-token.html#encoding-additional-information-in-your-token">here</a>.
 </p>
 
 <p>
-Most scripting languages support base32 encoding — Mikrotik routers? Not so much 🙂
+Most scripting environments support Base32 encoding — MikroTik RouterOS does not.
 </p>
+
+<h3>Why this is useful</h3>
+
+<ul>
+  <li>Works on low-resource devices</li>
+  <li>No need for external logging infrastructure</li>
+  <li>Near real-time alerting</li>
+  <li>Ideal for home labs, SMBs, and edge devices</li>
+</ul>
 
 </body>
 </html>
