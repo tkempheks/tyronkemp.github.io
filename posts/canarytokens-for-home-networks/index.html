@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Canarytokens for home networks — Tyron Kemp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0d0f14;
+      color: #e8eaf0;
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      line-height: 1.8;
+    }
+
+    a { color: #00d4a4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 30px;
+      font-size: 14px;
+      color: #7a7f8e;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+
+    .meta {
+      color: #7a7f8e;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    h3, h4 {
+      margin-top: 40px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #c9d1d9;
+    }
+
+    pre {
+      background: #161b22;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    code {
+      color: #00d4a4;
+    }
+    
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .img-small {
+    max-width: 80%;
+    }
+
+    .img-large {
+    max-width: 90%;
+    }
+
+
+  </style>
+</head>
+
+<body>
+
+<a href="/" class="back">← Back to home</a>
+
+<h1>Canarytokens for home networks</h1>
+<div class="meta">Tyron Kemp · Feb 4, 2024 · 2 min read</div>
+
+<p>
+<a href="https://twitter.com/Denver_A">Denver</a>,
+<a href="https://twitter.com/dev0x01">Dev</a> and I did a talk about
+<a href="https://canarytokens.org/generate">Canarytokens</a> at
+<a href="https://www.youtube.com/watch?v=PURTU_F27Wk">BSides Cape Town 2022</a>.
+A portion of the talk covers how you could use Canarytokens to protect your SOHO networking equipment.
+This is what you’ll find written up below.
+</p>
+
+<h3>Detecting failed authentication attempts against a Mikrotik</h3>
+
+<p>
+Canarytokens are mostly built on top of two primitive alerting channels: HTTP and/or DNS requests.
+We can easily deploy various pre-built tokens (MS-Word, AWS, etc.), build our own detection,
+and use either the Web Bug or DNS Canarytoken as a triggering mechanism.
+</p>
+
+<p>
+This is what we’ll do below (use a DNS Canarytoken to trigger alerts for failed login attempts on a Mikrotik router).
+</p>
+
+<p>
+A Mikrotik <a href="https://wiki.mikrotik.com/wiki/Manual:Scripting">script</a>,
+<a href="https://wiki.mikrotik.com/wiki/Manual:System/Scheduler">scheduler</a>,
+and applicable <a href="https://wiki.mikrotik.com/wiki/Manual:System/Log">logging</a>
+needs to be configured on your Mikrotik.
+</p>
+
+<h4>Step 1 - Create Canarytoken and modify script parameters</h4>
+
+<p>
+The <a href="https://github.com/tkempheks/canary-canarytoken-stuff/blob/main/mikrotik_canarytoken_alerter">
+mikrotik_canarytoken_alerter</a> script requires you to create a DNS Canarytoken.
+</p>
+
+<img src="/assets/images/dns-canarytoken.png" class="img-small" alt="DNS Canarytoken">
+
+<p>
+Modify the <code>tokenDNSUrl</code> variable to include the host name generated from the DNS Canarytoken.
+</p>
+
+<img src="/assets/images/tokenDNSUrl.png" alt="tokenDNSUrl">
+
+<p>
+Take note of the currentBuf variable which indicates that a ‘canary’ logging action is required.
+</p>
+
+<img src="/assets/images/loggingBuffer.png" alt="loggingBuffer">
+
+<h4>Step 2 - Configure logging</h4>
+
+<p>A logging rule and action can be configured using:</p>
+
+<pre><code>/system logging action
+add name=canary target=disk
+/system logging
+add action=canary topics=system,error,critical
+</code></pre>
+
+<p>
+At this point, if a log entry contains “login failure” and the script is run,
+an alert will be generated.
+</p>
+
+<h4>Step 3 - Configure scheduler</h4>
+
+<pre><code>/system scheduler
+add interval=5m name=check-failed-login-attempts \
+on-event="/system/script/run auth-alert"
+</code></pre>
+
+<h4>Step 4 - Test and confirm</h4>
+
+<pre><code>log/print
+
+18:50:44 system,error,critical login failure for user root
+18:50:45 system,error,critical login failure for user root
+</code></pre>
+
+<p>Viola:</p>
+
+<img src="/assets/images/dnsMikrotikTrigger.png" class="img-small" alt="Trigger">
+
+<h4>Extra reading / script internals</h4>
+
+<p>
+If you dig into the Canarytoken alert, you’ll notice additional information (Chnl, Usr and IP):
+</p>
+
+<img src="/assets/images/genericData.png" class="img-small" alt="Data">
+
+<p>
+We can embed additional data into the DNS request sent to the Canarytoken server.
+The encoding steps are documented
+<a href="https://docs.canarytokens.org/guide/dns-token.html#encoding-additional-information-in-your-token">here</a>.
+</p>
+
+<p>
+Most scripting languages support base32 encoding — Mikrotik routers? Not so much 🙂
+</p>
+
+</body>
+</html>
