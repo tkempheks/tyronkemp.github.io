@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tinkering with a Huawei HG532s Router — Tyron Kemp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      background: #0d0f14;
+      color: #e8eaf0;
+      font-family: system-ui, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      line-height: 1.8;
+    }
+
+    a { color: #00d4a4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .back {
+      display: inline-block;
+      margin-bottom: 30px;
+      font-size: 14px;
+      color: #7a7f8e;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+
+    .meta {
+      color: #7a7f8e;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    h3, h4 {
+      margin-top: 40px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      color: #c9d1d9;
+    }
+
+    pre {
+      background: #161b22;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+
+    code {
+      color: #00d4a4;
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .img-small {
+    max-width: 50%;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<a href="/" class="back">← Back to home</a>
+
+<h1>Tinkering with a Huawei HG532s Router</h1>
+<div class="meta">Tyron Kemp · Feb 4, 2024 · 3 min read</div>
+
+<p>
+I had a few SOHO routers lying around and figured it was a good opportunity to dig into some hardware hacking.
+This post walks through how I gained deeper access to a Huawei HG532s — starting from UART access all the way to a shell.
+</p>
+
+<h3>Overview</h3>
+
+<p>
+The goal was simple:
+</p>
+
+<ul>
+  <li>Gain low-level access to the device</li>
+  <li>Extract firmware / memory</li>
+  <li>Identify credentials or hidden functionality</li>
+  <li>Escalate access to a shell</li>
+</ul>
+
+<h3>Step 1 — Finding UART access</h3>
+
+<p>
+After opening the router, I located the UART pins on the board and connected a USB-to-UART adapter.
+</p>
+
+<p>
+This gives direct serial access to the device — essential for interacting with the boot process.
+</p>
+
+<img src="/assets/images/huawei-uart.png" class="img-small" alt="UART Pins">
+
+<h3>Step 2 — Bootloader access and memory dump</h3>
+
+<p>
+By interrupting the boot process, I gained access to the bootloader.
+Conveniently, it exposes functionality to dump memory.
+</p>
+
+<img src="/assets/images/4.png" alt="Bootloader Memory Dump">
+
+<p>
+Dumping over serial is slow, so I used this script to automate it:
+</p>
+
+<p>
+<a href="https://github.com/danitool/bootloader-dump-tools/blob/master/rt63365tool.py">
+bootloader-dump-tools
+</a>
+</p>
+
+<img src="/assets/images/memory-dump.png" alt="Memory Dump">
+
+<h3>Step 3 — Static analysis</h3>
+
+<p>
+Running <code>strings</code> against the dumped firmware revealed several user accounts:
+</p>
+
+<ul>
+  <li>Admin</li>
+  <li>user</li>
+  <li><strong>!!Huawei</strong></li>
+</ul>
+
+<img src="/assets/images/strings.png" alt="Strings Output">
+
+<p>
+The interesting part is that <code>!!Huawei</code> is not exposed via the web interface — indicating a hidden or backdoor account.
+</p>
+
+<p>
+The password was easily discoverable online:
+</p>
+
+<pre><code>!!Huawei / @HuaweiHgw
+</code></pre>
+
+<h3>Step 4 — Configuration abuse</h3>
+
+<p>
+Telnet access was initially disabled.
+</p>
+
+<p>
+Using valid credentials, I downloaded the router configuration file.
+Although encrypted, the encryption method (AES-CBC with known key/IV) is publicly documented.
+</p>
+
+<p>
+This allowed me to:
+</p>
+
+<ul>
+  <li>Decrypt the config file</li>
+  <li>Modify the config to enable telnet</li>
+  <li>Reupload the modified config file</li>
+</ul>
+
+<img src="/assets/images/cyber-chef.png" alt="CyberChef Decryption">
+
+<h3>Step 5 — Hitting roadblocks</h3>
+
+<p>
+Even after enabling telnet, access was restricted by firewall rules.
+</p>
+
+<p>
+The intended workaround involved DNAT rules from WAN → LAN, but without DSL connectivity, this wasn’t viable.
+</p>
+
+<h3>Step 6 — Exploitation</h3>
+
+<p>
+So at this point i’m a little stuck with using the credentials, but luckily the version of firmware has a command injection vulnerability….
+</p>
+
+<img src="/assets/images/rce.png" alt="Command Injection">
+
+<p>
+Using this, I:
+</p>
+
+<ul>
+  <li>Modified iptables to allow access</li>
+  <li>Uploaded a BusyBox netcat binary</li>
+  <li>Established a reverse shell</li>
+</ul>
+
+<p>
+This ultimately provided shell-level access to the device.
+</p>
+
+<h3>Step 7 — Shell access</h3>
+
+<p>
+However in this case, there’s no shell command, but we can give ourselves acccess to busybox/the shell using our uploaded netcat binary.
+</p>
+
+<img src="/assets/images/shell.png" alt="Shell Access">
+
+<p>
+At this point, full control over the device was achieved.
+</p>
+
+<h3>Wrap-up</h3>
+
+<p>
+There are multiple paths that could lead to the same outcome, and this was just one exploration.
+</p>
+
+<p>
+The key takeaway is how quickly access can escalate when:
+</p>
+
+<ul>
+  <li>Hardware access is available</li>
+  <li>Firmware protections are weak</li>
+  <li>Known vulnerabilities exist</li>
+</ul>
+
+<p>
+Plenty more to explore here — this was just scratching the surface.
+</p>
+
+</body>
+</html>
