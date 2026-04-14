@@ -1,32 +1,622 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Tyron Kemp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tyron Kemp — Cybersecurity</title>
   <style>
-    body { font-family: Arial; max-width: 700px; margin: 40px auto; line-height: 1.6; }
-    h1 { margin-bottom: 0; }
-    .title { color: #666; margin-top: 5px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --bg2: #13161e;
+      --bg3: #1a1e28;
+      --border: rgba(255,255,255,0.07);
+      --accent: #00d4a4;
+      --accent2: #0099ff;
+      --text: #e8eaf0;
+      --muted: #7a7f8e;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13,15,20,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .nav-logo {
+      font-size: 15px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text);
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      font-size: 13px; color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 6rem 2rem 4rem;
+      max-width: 1000px; margin: 0 auto;
+    }
+    .hero-inner { max-width: 640px; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,212,164,0.08);
+      border: 1px solid rgba(0,212,164,0.2);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px; font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .hero-sub {
+      font-size: 1.05rem; color: var(--muted);
+      max-width: 500px;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d0f14;
+    }
+    .btn-primary:hover { background: #00bfa0; text-decoration: none; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.2); text-decoration: none; }
+
+    /* SECTIONS */
+    section {
+      max-width: 1000px; margin: 0 auto;
+      padding: 5rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700; letter-spacing: -0.01em;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ABOUT */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 640px) { .about-grid { grid-template-columns: 1fr; } }
+    .about-text { color: var(--muted); line-height: 1.9; font-size: 15px; }
+    .about-text p + p { margin-top: 1rem; }
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .stat-num {
+      font-size: 2rem; font-weight: 700;
+      color: var(--accent); line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); }
+
+    /* EXPERIENCE */
+    .timeline { position: relative; }
+    .timeline::before {
+      content: ''; position: absolute;
+      left: 0; top: 8px; bottom: 8px;
+      width: 1px; background: var(--border);
+    }
+    .tl-item {
+      padding-left: 2rem;
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+    .tl-item::before {
+      content: ''; position: absolute;
+      left: -4px; top: 8px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--accent);
+    }
+    .tl-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+      margin-bottom: 0.25rem;
+    }
+    .tl-role { font-size: 15px; font-weight: 600; }
+    .tl-company {
+      font-size: 13px; color: var(--accent);
+      font-weight: 500;
+    }
+    .tl-date {
+      font-size: 12px; color: var(--muted);
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+    .tl-bullets {
+      margin-top: 0.75rem;
+      list-style: none;
+    }
+    .tl-bullets li {
+      font-size: 13px; color: var(--muted);
+      padding: 3px 0 3px 16px;
+      position: relative;
+      line-height: 1.6;
+    }
+    .tl-bullets li::before {
+      content: '—';
+      position: absolute; left: 0;
+      color: var(--border);
+    }
+
+    /* SKILLS */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .skill-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .skill-card:hover { border-color: rgba(0,212,164,0.25); }
+    .skill-card-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .skill-card-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: rgba(0,212,164,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 11px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 9px;
+      color: var(--muted);
+    }
+
+    /* CERTS */
+    .certs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .cert-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .cert-card:hover {
+      border-color: rgba(0,212,164,0.3);
+      transform: translateY(-2px);
+    }
+    .cert-badge {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(0,212,164,0.1);
+      border: 1px solid rgba(0,212,164,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin: 0 auto 0.75rem;
+    }
+    .cert-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .cert-full { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+    /* COMMUNITY */
+    .community-list { display: grid; gap: 1rem; }
+    .community-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: flex; align-items: center; gap: 1.25rem;
+    }
+    .community-icon {
+      width: 42px; height: 42px; flex-shrink: 0;
+      border-radius: 10px;
+      background: rgba(0,153,255,0.1);
+      border: 1px solid rgba(0,153,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .community-event { font-size: 14px; font-weight: 600; }
+    .community-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* CONTACT */
+    .contact-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 640px) { .contact-inner { grid-template-columns: 1fr; } }
+    .contact-blurb { color: var(--muted); line-height: 1.8; }
+    .contact-links { display: flex; flex-direction: column; gap: 0.75rem; }
+    .contact-link {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.875rem 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .contact-link:hover { border-color: rgba(0,212,164,0.3); text-decoration: none; }
+    .contact-link-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(0,212,164,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .contact-link-label { font-size: 12px; color: var(--muted); }
+    .contact-link-val { font-size: 13px; font-weight: 500; color: var(--text); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 12px; color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      section { padding: 3.5rem 1.25rem; }
+    }
   </style>
 </head>
 <body>
-  <h1>Tyron Kemp</h1>
-  <p class="title">Cybersecurity | Pentester</p>
 
-  <h2>About</h2>
-  <p>Short intro about you.</p>
+<nav>
+  <div class="nav-logo">Tyron<span>.</span></div>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#Capabilities">Capabilities</a>
+    <a href="#experience">Experience</a>
+    <a href="#skills">Skills</a>
+    <a href="#certifications">Certs</a>
+    <a href="#contact">Contact</a>
+  </div>
+</nav>
 
-  <h2>Experience</h2>
-  <ul>
-    <li>Role – Company – Year</li>
-  </ul>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <h1>Tyron Kemp<br><em>Cybersecurity</em> Professional</h1>
+    <p class="hero-sub">
+      Senior offensive security specialist with 10+ years across penetration testing,
+      adversary simulation, deception engineering, and technical sales engineering.
+      Based in Paarl, South Africa.
+    </p>
+    <div class="hero-ctas">
+      <a href="#contact" class="btn btn-primary">Get in touch</a>
+      <a href="#experience" class="btn btn-outline">View experience</a>
+    </div>
+  </div>
+</div>
 
-  <h2>Projects</h2>
-  <ul>
-    <li>Project name – short description</li>
-  </ul>
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-label">About</div>
+  <div class="section-title">A decade of breaking things<br>to make them stronger</div>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>I'm a senior cybersecurity professional with deep roots in offensive security — from hands-on penetration testing and red teaming to building detection strategies using deception engineering.</p>
+      <p>My career spans technical roles across penetration testing, security architecture, network engineering, and deception strategy, with experience in both hands-on delivery and customer-facing technical advisory.</p>
+      <p>I've spoken at Black Hat USA and BSides Cape Town, and built training content for Offensive Security's globally recognised platform.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num">10+</div>
+        <div class="stat-label">Years in cybersecurity</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">5</div>
+        <div class="stat-label">Active certifications</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Conference talks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">OSCP</div>
+        <div class="stat-label">Top offensive cert</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <h2>Contact</h2>
-  <p>Email / LinkedIn</p>
-</body>
-</html>
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-label">Experience</div>
+  <div class="section-title">Where I've worked</div>
+  <div class="skills-grid">
+
+    <div class="skill-card">
+      <div class="tl-role" style="margin-bottom:4px;">Thinkst Applied Research</div>
+      <div class="tl-date" style="margin-bottom:10px;"></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Technical Sales Engineer — deception strategy, Canary deployments, and enterprise security advisory.</p>
+    </div>
+
+    <div class="skill-card">
+      <div class="tl-role" style="margin-bottom:4px;">Offensive Security</div>
+      <div class="tl-date" style="margin-bottom:10px;"></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Content Engineer — built globally used training labs and realistic adversary attack scenarios.</p>
+    </div>
+
+    <div class="skill-card">
+      <div class="tl-role" style="margin-bottom:4px;">SensePost</div>
+      <div class="tl-date" style="margin-bottom:10px;"></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Lead Security Analyst — penetration testing, incident response, and security research across web, mobile, and infrastructure.</p>
+    </div>
+
+    <div class="skill-card">
+      <div class="tl-role" style="margin-bottom:4px;">NTT</div>
+      <div class="tl-date" style="margin-bottom:10px;"></div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Senior Network & Security Engineer — enterprise architecture, firewall design, and security operations across MEA.</p>
+    </div>
+
+  </div>
+  <!-- <p style="font-size:12px;color:var(--muted);margin-top:1.5rem;">Full work history available on request.</p> -->
+</section>
+
+<!-- SERVICES -->
+<section id="Capabilities">
+  <div class="section-label">Capabilities</div>
+  <div class="section-title">Areas of Expertise</div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🎯</div>Penetration Testing</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Real-world attack simulation across web applications, internal infrastructure, and cloud environments to identify and prove exploitable risk.</p>
+    </div>
+    <!--
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">👤</div>Adversary Simulation</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Emulate realistic attacker behaviour — TTPs, lateral movement, persistence — to stress-test your detection and response capabilities.</p>
+    </div>
+     -->
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🕵️</div>Deception & Detection Strategy</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Design and deploy deception systems that surface attacker activity early, improving visibility across your environment without adding noise.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🏗️</div>Security Architecture Review</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;">Assess and advise on network segmentation, firewall posture, and security control design from an attacker's perspective.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+
+  <div class="section-label">Skills</div>
+  <div class="section-title">Tech stack & expertise</div>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🎯</div>Offensive Security</div>
+      <div class="skill-tags">
+        <span class="tag">Penetration Testing</span>
+        <!--<span class="tag">Adversary Simulation</span>-->
+        <span class="tag">Red Teaming</span>
+        <span class="tag">Exploit Dev</span>
+      </div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🕵️</div>Deception Engineering</div>
+      <div class="skill-tags">
+        <span class="tag">Thinkst Canary</span>
+        <span class="tag">Detection Strategy</span>
+        <span class="tag">Honeypots</span>
+        <span class="tag">Threat Modelling</span>
+      </div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🌐</div>Network Security</div>
+      <div class="skill-tags">
+        <span class="tag">Fortinet</span>
+        <span class="tag">Cisco</span>
+        <span class="tag">Firewalls</span>
+        <span class="tag">Segmentation</span>
+        <span class="tag">VPN</span>
+      </div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">🛠️</div>Tools & Platforms</div>
+      <div class="skill-tags">
+        <span class="tag">Burp Suite</span>
+        <span class="tag">Impacket</span>
+        <span class="tag">Metasploit</span>
+        <span class="tag">Linux</span>
+        <span class="tag">Windows</span>
+      </div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">☁️</div>Cloud & Infra</div>
+      <div class="skill-tags">
+        <span class="tag">AWS</span>
+        <span class="tag">Azure</span>
+        <span class="tag">Docker</span>
+        <span class="tag">VMware</span>
+      </div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-card-title"><div class="icon">💻</div>Development</div>
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Bash</span>
+        <span class="tag">Scripting & Automation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CERTIFICATIONS -->
+<section id="certifications">
+  <div class="section-label">Certifications</div>
+  <div class="section-title">Professional credentials</div>
+  <div class="certs-grid">
+    <div class="cert-card">
+      <div class="cert-badge">🔐</div>
+      <div class="cert-name">OSCP</div>
+      <div class="cert-full">Offensive Security Certified Professional</div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-badge">🛡️</div>
+      <div class="cert-name">CISSP</div>
+      <div class="cert-full">Certified Information Systems Security Professional</div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-badge">🌐</div>
+      <div class="cert-name">CCNP</div>
+      <div class="cert-full">Cisco Certified Network Professional</div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-badge">🔒</div>
+      <div class="cert-name">CCNA Security</div>
+      <div class="cert-full">Cisco Certified Network Associate Security</div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-badge">🦾</div>
+      <div class="cert-name">NSE4</div>
+      <div class="cert-full">Fortinet Network Security Expert Level 4</div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-badge">⚔️</div>
+      <div class="cert-name">CNP</div>
+      <div class="cert-full">Certified Network Pentester</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community">
+  <div class="section-label">Community</div>
+  <div class="section-title">Speaking & contributions</div>
+  <div class="community-list">
+    <div class="community-item">
+      <div class="community-icon">🎤</div>
+      <div>
+        <div class="community-event">Speaker — Black Hat USA 2020</div>
+        <div class="community-desc">Presented research at one of the world's most prestigious security conferences</div>
+      </div>
+    </div>
+    <div class="community-item">
+      <div class="community-icon">🛠️</div>
+      <div>
+        <div class="community-event">Creator — Black Hat Arsenal 2020</div>
+        <div class="community-desc">Open-source tool demonstrator at the Black Hat Arsenal showcase</div>
+      </div>
+    </div>
+    <div class="community-item">
+      <div class="community-icon">🎤</div>
+      <div>
+        <div class="community-event">Speaker — BSides Cape Town 2023</div>
+        <div class="community-desc">Contributed to the local security community through research and knowledge sharing</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label">Contact</div>
+  <div class="section-title">Let's connect</div>
+  <div class="contact-inner">
+    <div class="contact-blurb">
+      <p>Whether you're looking for a technical security advisor, a speaker for your next event, or someone to help your organisation think like an attacker — I'd love to hear from you.</p>
+      <p style="margin-top: 1rem;">Based in Paarl, South Africa. Open to opportunities and collaboration.</p>
+    </div>
+    <div class="contact-links">
+      <a href="mailto:kemptyron@gmail.com" class="contact-link">
+        <div class="contact-link-icon">✉️</div>
+        <div>
+          <div class="contact-link-label">Email</div>
+          <div class="contact-link-val">kemptyron@gmail.com</div>
+        </div>
+      </a>
+      <a href="tel:+27711769066" class="contact-link">
+        <div class="contact-link-icon">📞</div>
+        <div>
+          <div class="contact-link-label">Phone</div>
+          <div class="contact-link-val">+27 71 176 9066</div>
+        </div>
+      </a>
+      <a href="https://linkedin.com/in/tyronkemp" target="_blank" class="contact-link">
+        <div class="contact-link-icon">🔗</div>
+        <div>
+          <div class="contact-link-label">LinkedIn</div>
+          <div class="contact-link-val">linkedin.com/in/tyronkemp</div>
